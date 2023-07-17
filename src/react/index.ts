@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useState} from "react";
-import {SessionAccessor} from "../index.ts";
+import {SessionAccessor} from "../session";
 
 export const useSession = <T, K extends string>(accessor: SessionAccessor<K, T>, refreshIntervalMs = 100): [T | null, (value: T) => void] => {
     const [value, setValue] = useState<T | null>(null);

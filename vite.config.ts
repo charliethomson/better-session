@@ -9,7 +9,7 @@ export default defineConfig({
     plugins: [dts(), react()],
     build: {
         lib: {
-            entry: path.resolve(__dirname, "src/lib/react.test.tsx"),
+            entry: path.resolve(__dirname, "src/index.ts"),
             name: "better-session",
             fileName: "better-session",
         },

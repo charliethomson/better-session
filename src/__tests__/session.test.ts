@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import {describe, expect, it, vi} from "vitest";
-import {createSession, s} from "../index.ts";
+import {createSession, s} from "../session";
 import {z} from "zod";
 
 describe('session things', () => {

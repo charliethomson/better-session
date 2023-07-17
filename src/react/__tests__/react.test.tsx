@@ -1,8 +1,8 @@
 import {render, screen,} from '@testing-library/react';
 
 import {describe, it} from "vitest";
-import {createSession, s} from "../../index.ts";
-import {useSession} from "../index.ts";
+import {createSession, s} from "../../session";
+import {useSession} from "../index";
 import userEvent from "@testing-library/user-event";
 import {FC} from "react";
 import {act} from "react-dom/test-utils";
