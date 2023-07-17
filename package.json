@@ -1,8 +1,25 @@
 {
-  "name": "better-session",
-  "private": true,
-  "version": "0.0.0",
+  "name": "@charliethomson/better-session",
+  "version": "0.1.14",
   "type": "module",
+  "main": "./dist/better-session.umd.cjs",
+  "module": "./dist/better-session.js",
+  "types": "./dist/lib/index.d.ts",
+  "license": "MIT",
+  "keywords": [
+    "typescript",
+    "session",
+    "quality-of-life"
+  ],
+  "author": {
+    "name": "Charlie Thomson",
+    "email": "charlie@thmsn.dev",
+    "url": "https://thmsn.dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/charliethomson/better-session"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -29,6 +46,7 @@
     "jsdom": "^22.1.0",
     "typescript": "^5.0.2",
     "vite": "^4.4.0",
+    "vite-plugin-dts": "^1.7.1",
     "vitest": "^0.33.0"
   }
 }
