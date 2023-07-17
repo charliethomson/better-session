@@ -43,6 +43,7 @@ describe('session things', () => {
             storage: testStorage,
         })
 
+
         expect(session.foo.get()).toBeNull();
         expect(session.bar.get()).toBeNull();
         expect(session.shaped.get()).toBeNull();
@@ -76,5 +77,26 @@ describe('session things', () => {
         expect(session.obfuscatedBoolean.get()).toStrictEqual(false);
         expect(session.constantBoolean.get()).toStrictEqual(false);
         expect(session.boolean.get()).toStrictEqual(false);
+
+        session.remove('foo');
+        expect(session.foo.get()).toBeNull();
+        session.set('foo', fooValue);
+        expect(session.foo.get()).toStrictEqual(fooValue);
+        // @ts-expect-error pass-number-to-string-key
+        session.set('foo', 123);
+        // type is incorrect, but it gets converted to a string in the session then is expected to be a string - so this is correct
+        expect(session.get('foo')).toStrictEqual('123');
+        session.remove('foo');
+        expect(session.get('foo')).toBeNull();
+
+        session.clear();
+        expect(session.foo.get()).toBeNull();
+        expect(session.bar.get()).toBeNull();
+        expect(session.shaped.get()).toBeNull();
+        expect(session.object.get()).toBeNull();
+        expect(session.obfuscatedBoolean.get()).toBeNull();
+        expect(session.constantBoolean.get()).toBeNull();
+        expect(session.boolean.get()).toBeNull();
+        expect(session.type.get()).toBeNull();
     });
 })

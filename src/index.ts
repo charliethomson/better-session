@@ -13,7 +13,7 @@ declare global {
 }
 
 
-class SessionAccessor<K extends string, T> {
+export class SessionAccessor<K extends string, T> {
     private mapper: Stringifier<T>;
 
     private get storage(): Storage {
@@ -109,7 +109,7 @@ const mappers = {
             to: (b) => b ? on : off
         };
     },
-    json: <T>(): Stringifier<T> => ({ from: s => s ? JSON.parse(s) as T : null, to: o => JSON.stringify(o) })
+    json: <T>(): Stringifier<T> => ({from: s => s ? JSON.parse(s) as T : null, to: o => JSON.stringify(o)})
 }
 type CustomBoolean = { on: string, off: string }
 
@@ -133,13 +133,20 @@ export const s = {
     object: <K extends string, Schema extends z.Schema<unknown>>(key: K, validator: Schema): SessionAccessor<K, z.infer<Schema>> =>
         new SessionAccessor(key, mappers.object(validator)),
 
-    type: <T>() => <K extends string>(key:K) => new SessionAccessor<K, T>(key, mappers.json<T>()),
+    type: <T>() => <K extends string>(key: K) => new SessionAccessor<K, T>(key, mappers.json<T>()),
 
     boolean: <K extends string>(key: K, options?: BooleanOptions): SessionAccessor<K, boolean> =>
         options?.obfuscate ?
             new SessionAccessor(key, mappers.obfuscatedBoolean(options?.constants)) :
             new SessionAccessor(key, mappers.boolean)
+}
 
+export type Session<Configuration extends Record<string, SessionAccessor<any, any>>> = Configuration & {
+    get<K extends keyof Configuration>(key: K): Configuration[K] extends SessionAccessor<any, infer T> ? T | null : never;
+    set<K extends keyof Configuration>(key: K, value: Configuration[K] extends SessionAccessor<any, infer T> ? T | null : never): void;
+
+    remove<K extends keyof Configuration>(key: K): void;
+    clear(): void;
 }
 
 export type CreateSessionOptions = {
@@ -161,9 +168,25 @@ export type CreateSessionOptions = {
      */
     storage?: Storage;
 }
-export const createSession = <Keys>(keys: Keys, options?: CreateSessionOptions) => {
+export const createSession = <Configuration extends Record<string, SessionAccessor<any, any>>>(configuration: Configuration, options?: CreateSessionOptions): Session<Configuration> => {
     if (options?.storage) window.__BetterSession__StorageLocation = options.storage;
     if (options?.encrypt && options.mode === 'prod') window.__BetterSession__Encrypt = true;
 
-    return keys;
+    return {
+        ...configuration,
+        get<K extends keyof Configuration>(key: K): Configuration[K] extends SessionAccessor<any, infer T> ? T | null : never {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return configuration[key]?.get() ?? null;
+        },
+        set<K extends keyof Configuration>(key: K, value: Configuration[K] extends SessionAccessor<any, infer T> ? T | null : never): void {
+            configuration[key]?.set(value);
+        },
+        remove<K extends keyof Configuration>(key: K): void {
+            configuration[key].remove();
+        },
+        clear(): void {
+            const storage = window.__BetterSession__StorageLocation ?? sessionStorage;
+            storage?.clear();
+        }
+    };
 }
