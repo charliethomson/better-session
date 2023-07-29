@@ -1,7 +1,7 @@
 import { z } from "zod";
 import CryptoJS from "crypto-js";
 
-type Stringifier<T> = {
+export type SessionShim<T> = {
   from: (str: string | null) => T | null;
   to: (value: T) => string;
 };
@@ -13,22 +13,23 @@ declare global {
 }
 
 export class SessionAccessor<K extends string, T> {
-  private mapper: Stringifier<T>;
+  private shim: SessionShim<T>;
 
   private get storage(): Storage {
     return window.__BetterSession__StorageLocation ?? sessionStorage;
   }
 
   private get encrypt(): boolean {
+    // TODO: Find a better way to store the encryption secrets
     return window.__BetterSession__Encrypt ?? false;
   }
 
   public key: K;
   private secret: string;
 
-  constructor(key: K, mapper: Stringifier<T>) {
+  constructor(key: K, shim: SessionShim<T>) {
     this.key = key;
-    this.mapper = mapper;
+    this.shim = shim;
     this.secret = randomString(32);
   }
 
@@ -41,11 +42,11 @@ export class SessionAccessor<K extends string, T> {
       : value;
     const b64decoded = atob(encoded);
 
-    return this.mapper.from(b64decoded);
+    return this.shim.from(b64decoded);
   }
 
   public set(value: T) {
-    const content = this.mapper.to(value);
+    const content = this.shim.to(value);
     const b64encoded = btoa(content);
 
     const encoded = this.encrypt
@@ -80,44 +81,55 @@ const randomString = (length: number): string => {
   return seed.substring(absoluteOffset, absoluteOffset + length);
 };
 
+export const createShim = <T>(
+  from: SessionShim<T>["from"],
+  to: SessionShim<T>["to"],
+): SessionShim<T> => ({ from, to });
+
 const mappers = {
-  number: {
-    from: (s: string | null) => (s ? parseInt(s, 10) : null),
-    to: (v: number) => v.toString(10),
-  } as Stringifier<number>,
-  string: {
-    from: (s: string | null) => s,
-    to: (s: string) => s,
-  } as Stringifier<string>,
+  number: createShim<number>(
+    (s) => (s ? parseInt(s, 10) : null),
+    (v) => v.toString(10),
+  ),
+  string: createShim<string>(
+    (s) => s,
+    (s) => s,
+  ),
+  date: createShim<Date>(
+    (s) => (s ? new Date(parseInt(s, 10)) : null),
+    (d) => d.getTime().toString(10),
+  ),
+
   shape: <Shape extends z.ZodRawShape>(shape: Shape) =>
-    ({
-      from: (s: string | null): z.infer<z.ZodObject<Shape>> | null => {
+    createShim<z.infer<z.ZodObject<Shape>>>(
+      (s): z.infer<z.ZodObject<Shape>> | null => {
         return s ? z.object(shape).parse(JSON.parse(s)) : null;
       },
-      to: (v: z.infer<z.ZodObject<Shape>>): string => JSON.stringify(v),
-    }) as Stringifier<z.infer<z.ZodObject<Shape>>>,
+      (v): string => JSON.stringify(v),
+    ),
   object: <Schema extends z.Schema<unknown>>(validator: Schema) =>
-    ({
-      from: (s: string | null) => (s ? validator.parse(JSON.parse(s)) : null),
-      to: (v: z.infer<Schema>) => JSON.stringify(v),
-    }) as Stringifier<z.infer<Schema>>,
-  boolean: {
-    from: (s: string | null) => s === "true",
-    to: (v: boolean) => v.toString(),
-  } as Stringifier<boolean>,
-  obfuscatedBoolean: (constant?: CustomBoolean): Stringifier<boolean> => {
+    createShim<z.infer<Schema>>(
+      (s) => (s ? validator.parse(JSON.parse(s)) : null),
+      (v) => JSON.stringify(v),
+    ),
+  boolean: createShim<boolean>(
+    (s) => s === "true",
+    (v) => v.toString(),
+  ),
+  obfuscatedBoolean: (constant?: CustomBoolean) => {
     const on = constant?.on ?? randomString(32);
     const off = constant?.off ?? randomString(32);
 
-    return {
-      from: (s) => s === on,
-      to: (b) => (b ? on : off),
-    };
+    return createShim(
+      (s) => s === on,
+      (b) => (b ? on : off),
+    );
   },
-  json: <T>(): Stringifier<T> => ({
-    from: (s) => (s ? (JSON.parse(s) as T) : null),
-    to: (o) => JSON.stringify(o),
-  }),
+  json: <T>(): SessionShim<T> =>
+    createShim(
+      (s) => (s ? (JSON.parse(s) as T) : null),
+      (o) => JSON.stringify(o),
+    ),
 };
 type CustomBoolean = { on: string; off: string };
 
@@ -162,6 +174,14 @@ export const s = {
     options?.obfuscate
       ? new SessionAccessor(key, mappers.obfuscatedBoolean(options?.constants))
       : new SessionAccessor(key, mappers.boolean),
+
+  date: <K extends string>(key: K): SessionAccessor<K, Date> =>
+    new SessionAccessor(key, mappers.date),
+
+  custom: <K extends string, T>(
+    key: K,
+    shim: SessionShim<T>,
+  ): SessionAccessor<K, T> => new SessionAccessor<K, T>(key, shim),
 };
 
 export type Session<

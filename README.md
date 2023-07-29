@@ -2,6 +2,8 @@
 
 ### Adds specific and useful typing, and security through obscurity to the browser storage
 
+### NOTE: If encrypt is used, the data will be lost between tabs - the keys are generated per key, and stored in the tab context.
+
 ## Examples
 <hr/>
 
