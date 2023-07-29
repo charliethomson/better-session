@@ -1,25 +1,31 @@
-import {useCallback, useEffect, useState} from "react";
-import {SessionAccessor} from "../session";
+import { useCallback, useEffect, useState } from "react";
+import { SessionAccessor } from "../session";
 
-export const useSession = <T, K extends string>(accessor: SessionAccessor<K, T>, refreshIntervalMs = 100): [T | null, (value: T) => void] => {
-    const [value, setValue] = useState<T | null>(null);
+export const useSession = <T, K extends string>(
+  accessor: SessionAccessor<K, T>,
+  refreshIntervalMs = 100,
+): [T | null, (value: T) => void] => {
+  const [value, setValue] = useState<T | null>(null);
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const newValue = accessor.get()
-            if (newValue === value) return;
-            setValue(newValue);
-        }, refreshIntervalMs);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newValue = accessor.get();
+      if (newValue === value) return;
+      setValue(newValue);
+    }, refreshIntervalMs);
 
-        return () => {
-            interval !== null && clearInterval(interval);
-        }
-    })
+    return () => {
+      interval !== null && clearInterval(interval);
+    };
+  });
 
-    const setter = useCallback((newValue: T) => {
-        accessor.set(newValue);
-        setValue(newValue);
-    }, [accessor])
+  const setter = useCallback(
+    (newValue: T) => {
+      accessor.set(newValue);
+      setValue(newValue);
+    },
+    [accessor],
+  );
 
-    return [value, setter];
-}
+  return [value, setter];
+};

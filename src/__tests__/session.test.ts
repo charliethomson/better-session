@@ -33,10 +33,13 @@ describe('session things', () => {
                 fizz: z.string(),
                 buzz: z.enum(['foo', 'bar']),
             })),
-            obfuscatedBoolean: s.boolean('obfuscated', { obfuscate: true }),
-            constantBoolean: s.boolean('constantBoolean', { obfuscate: true, constants: { on: "ThisIsOn", off: "ThisIsOff" }}),
+            obfuscatedBoolean: s.boolean('obfuscated', {obfuscate: true}),
+            constantBoolean: s.boolean('constantBoolean', {
+                obfuscate: true,
+                constants: {on: "ThisIsOn", off: "ThisIsOff"}
+            }),
             boolean: s.boolean('regulationBoolean'),
-            type: s.type<{ foo: string, bar: number}>()("typedef")
+            type: s.type<{ foo: string, bar: number }>()("typedef")
         }, {
             mode: 'prod',
             encrypt: true,
@@ -60,7 +63,7 @@ describe('session things', () => {
         session.obfuscatedBoolean.set(true);
         session.constantBoolean.set(true);
         session.boolean.set(true);
-        session.type.set({ foo: '123', bar: 321 });
+        session.type.set({foo: '123', bar: 321});
 
         expect(session.foo.get()).toStrictEqual(fooValue);
         expect(session.bar.get()).toStrictEqual(barValue);
@@ -69,7 +72,7 @@ describe('session things', () => {
         expect(session.obfuscatedBoolean.get()).toStrictEqual(true);
         expect(session.constantBoolean.get()).toStrictEqual(true);
         expect(session.boolean.get()).toStrictEqual(true);
-        expect(session.type.get()).toStrictEqual({ foo: '123', bar: 321 });
+        expect(session.type.get()).toStrictEqual({foo: '123', bar: 321});
 
         session.obfuscatedBoolean.set(false);
         session.constantBoolean.set(false);
