@@ -2,7 +2,7 @@ name: Publish
 
 on:
   release:
-    types: [ created ]
+    types: [created]
 
 jobs:
   build:
@@ -26,6 +26,8 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - run: npm i
       - run: npm run build
-      - run: npm publish
+      - run: cp ./package.json dist/
+      - run: cp ./README.md dist/
+      - run: npm publish ./dist
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}

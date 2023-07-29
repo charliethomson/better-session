@@ -2,9 +2,9 @@
   "name": "@charliethomson/better-session",
   "version": "0.1.22",
   "type": "module",
-  "main": "./dist/better-session.umd.cjs",
-  "module": "./dist/better-session.js",
-  "types": "./dist/index.d.ts",
+  "main": "./better-session.umd.cjs",
+  "module": "./better-session.js",
+  "types": "./index.d.ts",
   "license": "MIT",
   "keywords": [
     "typescript",
