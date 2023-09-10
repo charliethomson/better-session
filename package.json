@@ -1,6 +1,6 @@
 {
   "name": "@charliethomson/better-session",
-  "version": "0.1.22",
+  "version": "0.1.23",
   "type": "module",
   "main": "./better-session.umd.cjs",
   "module": "./better-session.js",
